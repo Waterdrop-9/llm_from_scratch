@@ -199,6 +199,7 @@ class MultiHeadSelfAttention(torch.nn.Module):
             if token_positions is None:
                 token_positions = torch.arange(seq_len, device=x.device)
             rope_positions = token_positions.unsqueeze(-2)  # [..., 1, T]
+            # 
             q = self.rope(q, rope_positions)
             k = self.rope(k, rope_positions)
 
@@ -208,6 +209,7 @@ class MultiHeadSelfAttention(torch.nn.Module):
         attn_output = scaled_dot_product_attention(q, k, v, mask=mask)  # [..., num_heads, seq_len, d_head]
 
         # 合并 heads 的正确过程：[..., H, T, K] -> [..., T, H, K] -> [..., T, D]
+        # 这里为什么不做concat？
         attn_output = attn_output.transpose(-2, -3).reshape(*batch_shape, seq_len, self.d_model)  # [..., T, D]
 
         # output projection: [..., T, D] -> [..., T, D]

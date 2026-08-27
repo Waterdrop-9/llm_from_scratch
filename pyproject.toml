@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.5.2",
+    "regex>=2026.3.32",
     "torch>=2.13.0",
 ]
 
