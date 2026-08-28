@@ -118,3 +118,39 @@ def test_encode_handles_repeated_missing_special_tokens():
 
     assert ids == [2, 2]
     assert tokenizer.decode(ids) == f"{special}{special}"
+
+
+def test_encode_iterable_is_lazy_and_preserves_chunk_order():
+    tokenizer = tokenizer_module.Tokenizer(
+        vocab={token_id: bytes([token_id]) for token_id in range(256)},
+        merges=[],
+    )
+    consumed_chunks: list[str] = []
+
+    def chunks():
+        for chunk in ["ab", "\n", "cd"]:
+            consumed_chunks.append(chunk)
+            yield chunk
+
+    token_ids = tokenizer.encode_iterable(chunks())
+
+    assert consumed_chunks == []
+    assert next(token_ids) == ord("a")
+    assert consumed_chunks == ["ab"]
+    remaining_ids = list(token_ids)
+    assert tokenizer.decode([ord("a"), *remaining_ids]) == "ab\ncd"
+    assert consumed_chunks == ["ab", "\n", "cd"]
+
+
+def test_encode_iterable_preserves_special_tokens():
+    special = "<|endoftext|>"
+    tokenizer = tokenizer_module.Tokenizer(
+        vocab={token_id: bytes([token_id]) for token_id in range(256)},
+        merges=[],
+        special_tokens=[special],
+    )
+
+    token_ids = list(tokenizer.encode_iterable([f"story{special}\n", "next"]))
+
+    assert token_ids.count(tokenizer.byte_to_id[special.encode("utf-8")]) == 1
+    assert tokenizer.decode(token_ids) == f"story{special}\nnext"

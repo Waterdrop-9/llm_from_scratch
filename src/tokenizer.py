@@ -1,4 +1,5 @@
 import re
+from collections.abc import Iterable, Iterator
 
 
 class Tokenizer:
@@ -83,3 +84,10 @@ class Tokenizer:
                 raise ValueError(f"ID {id} not found in vocabulary.")
             bytes_output.append(self.vocab[id])
         return b"".join(bytes_output).decode("UTF-8", errors="replace")
+
+    def encode_iterable(
+        self,
+        iterable: Iterable[str],
+    ) -> Iterator[int]:
+        for text_chunk in iterable:
+            yield from self.encode(text_chunk)
